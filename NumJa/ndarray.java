@@ -1,4 +1,5 @@
 package NumJa;
+import NumJa.exceptions.*;
 
 public class ndarray{
     private int rows;
@@ -81,17 +82,12 @@ public class ndarray{
 
 
     public double [][] get(String slice){
-
-        
         slice = slice.replaceAll("\\s", "");
-        // this deletes any whitespace : \\s
-    
-
 
         String[] parts= slice.split(",");
 
         if (parts.length < 1 || parts.length > 2){
-            throw new IllegalArgumentException("get() : It must have 2 parts");
+            throw new InvalidShapeException("Slice must have 1 or 2 parts, got " + parts.length);
         }
         String rowpart = parts[0];
         String columnpart=(parts.length == 2 && !parts[1].isEmpty()) ? parts[1] : ":";
@@ -104,28 +100,23 @@ public class ndarray{
         int colStart = colRange[0];
         int colEnd = colRange[1];
         
+        if (rowStart < 0 || rowEnd > rows || colStart < 0 || colEnd > columns) {
+            throw new OutOfBoundsException("Slice out of bounds: rows [" + rowStart + ":" + rowEnd + "] cols [" + colStart + ":" + colEnd + "] for shape " + rows + "x" + columns);
+        }
+        
         double[][] result = new double[rowEnd - rowStart][colEnd - colStart];
         
-        try{
-            for(int i = rowStart; i < rowEnd; i++){
-                for(int j = colStart; j < colEnd; j++){
-                    result[i - rowStart][j - colStart] = data[i][j];
-                }
+        for(int i = rowStart; i < rowEnd; i++){
+            for(int j = colStart; j < colEnd; j++){
+                result[i - rowStart][j - colStart] = data[i][j];
             }
-            return result;
-        }catch (ArrayIndexOutOfBoundsException e) {
-            System.out.println("Caught an error: " +e.getMessage());
-            return null;
         }
-
+        return result;
     }
     public void set(int i, int j, double val) {
-        // if (i < 0 || i >= rows || j < 0 || j >= columns) {
-        //     throw new NumJaException("Index error: Cannot set value at (" + i + ", " + j + 
-        //                             ") for array of shape (" + rows + ", " + columns + ")"
-        // );
-        // }
-
+        if (i < 0 || i >= rows || j < 0 || j >= columns) {
+            throw new OutOfBoundsException("Index (" + i + ", " + j + ") out of bounds for array of shape (" + rows + ", " + columns + ")");
+        }
         this.data[i][j] = val;
     }
 

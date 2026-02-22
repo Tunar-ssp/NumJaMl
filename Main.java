@@ -11,9 +11,16 @@ public class Main {
         };
         ndarray a =  np.array(testData);
         ndarray b = np.random(3,4);
-        
-        
-        System.out.println(np.add(a,b));
+
+        // np.save(b,"my_model.njz");
+    try {
+        np.save(b, "my_model.njz");
+        System.out.println("Model saved successfully!");
+    } catch (java.io.IOException e) {
+        System.out.println("Error: Could not save the file! " + e.getMessage());
+    }
+            
+        // System.out.println(np.add(a,b));
         
         
 
