@@ -17,26 +17,7 @@ public class NumJaArray {
     }
 
 
-    //Here we override toString function  in String
-    //Normally when we execute  System.out.println() it would call toString(from String class ) and execute it (print memory address at the end) 
-    //But here we replace it with our own function 
-    @Override
-    public String toString(){
-        String res="";
-        for(int i=0;i<rows;i++){
-            res +="[ ";
-            for(int j=0;j<columns;j++){
-                res+=data[i][j] + " ";
-            }
-            res +="]\n";
-        }
-        return res;
-    }
-
-
-    public int[] parsePart(String part, int maxSize){
-        
-        
+    private int[] parsePart(String part, int maxSize){
         if(part==":"){
             return new int[]{0,maxSize};
         }
@@ -71,22 +52,48 @@ public class NumJaArray {
     }
 
 
+    //Here we override toString function  in String
+    //Normally when we execute  System.out.println() it would call toString(from String class ) and execute it (print memory address at the end) 
+    //But here we replace it with our own function
+    @Override
+    public String toString(){
+        String res="";
+        for(int i=0;i<rows;i++){
+            res +="[ ";
+            for(int j=0;j<columns;j++){
+                res+=data[i][j] + " ";
+            }
+            res +="]\n";
+        }
+        return res;
+    }
+
+    public int[] shape(){
+        return new int[] {rows,columns};
+    }
+
+
+    public double get(int r,int c){
+        return data[r][c];
+    }
+
+
 
     public double [][] get(String slice){
 
         
-        slice=slice.replace("\\s+", "");
+        slice = slice.replaceAll("\\s", "");
         // this deletes any whitespace : \\s
-        // +  : one or more 
+    
 
 
         String[] parts= slice.split(",");
 
-        if (parts.length !=2){
+        if (parts.length < 1 || parts.length > 2){
             throw new IllegalArgumentException("get() : It must have 2 parts");
         }
         String rowpart = parts[0];
-        String columnpart=parts[1];
+        String columnpart=(parts.length == 2 && !parts[1].isEmpty()) ? parts[1] : ":";
 
         int[] rowRange = parsePart(rowpart, rows);
         int[] colRange = parsePart(columnpart, columns);
@@ -111,24 +118,134 @@ public class NumJaArray {
         }
 
     }
+    public void set(int i, int j, double val) {
+        // if (i < 0 || i >= rows || j < 0 || j >= columns) {
+        //     throw new NumJaException("Index error: Cannot set value at (" + i + ", " + j + 
+        //                             ") for array of shape (" + rows + ", " + columns + ")"
+        // );
+        // }
+
+        this.data[i][j] = val;
+    }
+
+
+
+    public double max(){
+
+        if (rows==0 || columns == 0) {
+        throw new IllegalStateException("max(): Array is empty");
+        }else{
+        double res=data[0][0];
+        for(int i=0;i<rows;i++){
+            for(int j=0;j<columns;j++){
+                if(res<data[i][j]){res=data[i][j];}
+            }
+            }
+        return res;
+        }
+        
+    }
+    public double min(){
+
+        if (rows==0 || columns == 0) {
+        throw new IllegalStateException("max(): Array is empty");
+        }else{
+        double res=data[0][0];
+        for(int i=0;i<rows;i++){
+            for(int j=0;j<columns;j++){
+                if(res>data[i][j]){res=data[i][j];}
+            }
+        }
+        return res;
+        }
+        
+    }
+    public double sum(){
+        
+        //TODO:exceptions 
+        //if 
+
+
+        double total=0;
+        
+        for(int i=0;i<rows;i++){
+            for(int j=0;j<columns;j++){
+                total+=data[i][j];
+            }
+        
+        }
+        return total;
+    }
+
+    public double mean(){
+        int totalElements=rows*columns;
+
+        double result=sum()/totalElements;
+        
+        return result; 
+
+    } 
+
+
+
+
+
+
+
+
+
+
+    //I could use void and make it more faster but it would cost me some ease of use in the future
+    //And in small project like that it doesnot matter to much so: 
+    public NumJaArray transpose(){
+        if (rows==0 || columns == 0) {throw new IllegalStateException("transpose(): Array is empty");}
+
+        double[][] transposed= new double[columns][rows];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                transposed[j][i] = data[i][j];
+            }
+    }
+        return new NumJaArray(transposed);
+
+
+    } 
     
+    public NumJaArray reshape(int target_row,int target_column){
+        int totalElements=rows*columns;
+        int target_element=target_row*target_column;
 
+        if (totalElements!=target_element){
+            throw new ReshapeException(
+                "Cannot reshape NumJa array: "+totalElements+
+                " elements do not match up with new shape: (" +target_row+","+target_column+")"
+            );
+        }
 
- 
-// set(i, j, val)
+        double[][] reshaped_array = new double[target_row][target_column];
+        int index=0;
+        for(int i=0;i<rows;i++){
+            for(int j=0;j<columns;j++){
+            reshaped_array[index/target_column][index%target_column]=data[i][j];
+            index++;
+            }
+        }
 
-// transpose()
+        return new NumJaArray(reshaped_array);
+    }
+    public NumJaArray flatten() {
+        return reshape(1, rows * columns);
+    }
+    public NumJaArray copy() {
+    double[][] newData = new double[rows][columns];
 
-// reshape(r, c)
-
-// max() 
-// min() 
-// mean() 
-// sum()
-
-// flatten()
-
-// copy ()
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            newData[i][j] = this.data[i][j];
+        }
+    }
+    return new NumJaArray(newData);
+}
 
 
 }
