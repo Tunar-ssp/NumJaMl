@@ -1,19 +1,20 @@
 package NumJa;
 
-public class NumJaArray {
+public class ndarray{
     private int rows;
     private int columns;
     private double[][] data;
 
-    public NumJaArray(int rows , int columns){
+    ndarray(int rows, int columns) {
         this.rows = rows;
-        this.columns= columns;
-        this.data=new double[rows][columns];
+        this.columns = columns;
+        this.data = new double[rows][columns];
     }
-    public NumJaArray(double [][] data ){
+
+    ndarray(double[][] data) {
         this.rows = data.length;
-        this.columns= data[0].length;
-        this.data= data;
+        this.columns = data[0].length;
+        this.data = data;
     }
 
 
@@ -197,7 +198,7 @@ public class NumJaArray {
 
     //I could use void and make it more faster but it would cost me some ease of use in the future
     //And in small project like that it doesnot matter to much so: 
-    public NumJaArray transpose(){
+    public ndarray transpose(){
         if (rows==0 || columns == 0) {throw new IllegalStateException("transpose(): Array is empty");}
 
         double[][] transposed= new double[columns][rows];
@@ -206,12 +207,12 @@ public class NumJaArray {
                 transposed[j][i] = data[i][j];
             }
     }
-        return new NumJaArray(transposed);
+        return new ndarray(transposed);
 
 
     } 
     
-    public NumJaArray reshape(int target_row,int target_column){
+    public ndarray reshape(int target_row,int target_column){
         int totalElements=rows*columns;
         int target_element=target_row*target_column;
 
@@ -231,12 +232,12 @@ public class NumJaArray {
             }
         }
 
-        return new NumJaArray(reshaped_array);
+        return new ndarray(reshaped_array);
     }
-    public NumJaArray flatten() {
+    public ndarray flatten() {
         return reshape(1, rows * columns);
     }
-    public NumJaArray copy() {
+    public ndarray copy() {
     double[][] newData = new double[rows][columns];
 
     for (int i = 0; i < rows; i++) {
@@ -244,7 +245,7 @@ public class NumJaArray {
             newData[i][j] = this.data[i][j];
         }
     }
-    return new NumJaArray(newData);
+    return new ndarray(newData);
 }
 
 
