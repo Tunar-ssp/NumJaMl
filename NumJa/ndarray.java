@@ -73,6 +73,10 @@ public class ndarray{
     public int[] shape(){
         return new int[] {rows,columns};
     }
+
+    public int size(){
+        return rows * columns;
+    }
   
     //I am gonna use this for Matrix multiplication
     //They cannot be reached from outside
@@ -198,7 +202,40 @@ public class ndarray{
         
         return result; 
 
-    } 
+    }
+    
+    //---Bridges---
+    public ndarray add(double val) {
+        return np.add(this, val); 
+    }
+    public ndarray add(ndarray val) {
+        return np.add(this, val);
+    }
+
+    public ndarray subtract(double val) {
+        return np.subtract(this, val);
+    }
+    public ndarray subtract(ndarray val) {
+        return np.subtract(this, val);
+    }
+
+    public ndarray multiply(double val) {
+        return np.multiply(this, val);
+    }
+    public ndarray multiply(ndarray val) {
+        return np.multiply(this, val);
+    }
+
+    public ndarray divide(double val) {
+        return np.divide(this, val);
+    }
+    public ndarray divide(ndarray val) {
+        return np.divide(this, val);
+    }
+    public int argmax() {
+    return np.argmax(this);
+    }
+    
 
 
 

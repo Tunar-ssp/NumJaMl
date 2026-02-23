@@ -10,10 +10,29 @@ public class np {
 
 
     public static ndarray softmax(ndarray a) {
-    ndarray expA = exp(a);
-    double sum = expA.sum();
-    return multiply(expA, 1.0 / sum);
+        ndarray expA = exp(a);
+        double sum = expA.sum();
+        return multiply(expA, 1.0 / sum);
     }
+    public static int argmax(ndarray a) {
+        int r = a.shape()[0];
+        int c = a.shape()[1];
+        
+        double maxVal = Double.NEGATIVE_INFINITY;
+        int maxIndex = -1;
+
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                double current = a.get(i, j);
+                if (current > maxVal) {
+                    maxVal = current;
+                    maxIndex = (i * c) + j;
+                }
+            }
+        }
+        return maxIndex;
+    }
+
     public static ndarray exp(ndarray a) {
         int r = a.shape()[0];
         int c = a.shape()[1];
@@ -75,8 +94,29 @@ public class np {
         return maximum(b, a);
     }
 
-    
+    public static ndarray power(ndarray a, double p) {
+        int r = a.shape()[0];
+        int c = a.shape()[1];
+        double[][] result = new double[r][c];
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                result[i][j] = Math.pow(a.get(i, j), p);
+            }
+        }
+        return new ndarray(result);
+    }
 
+    public static double sum(ndarray a) {
+        double total = 0;
+        int r = a.shape()[0];
+        int c = a.shape()[1];
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                total += a.get(i, j);
+            }
+        }
+        return total;
+    }
 
     
     public static ndarray zeros(int r, int c) {
@@ -323,6 +363,18 @@ public class np {
         }
         ndarray res=new ndarray(arr);
         return res;
+    }
+    public static ndarray mask(ndarray a, double threshold) {
+        int r = a.shape()[0];
+        int c = a.shape()[1];
+        double[][] result = new double[r][c];
+        
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                result[i][j] = (a.get(i, j) > threshold) ? 1.0 : 0.0;
+            }
+        }
+        return new ndarray(result);
     }
 
     //------------------Matrix Multiplication---------------------
