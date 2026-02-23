@@ -9,3 +9,7 @@ Test.java
 
 #Saved NumJa file extention 
 *.njz
+
+
+data/
+test.py

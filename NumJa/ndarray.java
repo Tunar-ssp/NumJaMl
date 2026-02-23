@@ -20,7 +20,7 @@ public class ndarray{
 
 
     private int[] parsePart(String part, int maxSize){
-        if(part==":"){
+        if(part.equals(":")){
             return new int[]{0,maxSize};
         }
 
@@ -73,15 +73,37 @@ public class ndarray{
     public int[] shape(){
         return new int[] {rows,columns};
     }
+  
+    //I am gonna use this for Matrix multiplication
+    //They cannot be reached from outside
+    double[][] raw() {
+        return data;
+    }
+    double[] flattenedData() {
+        double[] flat = new double[rows * columns];
+        int index = 0;
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                flat[index++] = data[i][j];
+            }
+        }
+
+    return flat;
+    }
 
 
+
+
+
+    //---------------------------Get----------------------
     public double get(int r,int c){
         return data[r][c];
     }
 
 
 
-    public double [][] get(String slice){
+    public ndarray get(String slice){
         slice = slice.replaceAll("\\s", "");
 
         String[] parts= slice.split(",");
@@ -111,7 +133,7 @@ public class ndarray{
                 result[i - rowStart][j - colStart] = data[i][j];
             }
         }
-        return result;
+        return new ndarray(result);
     }
     public void set(int i, int j, double val) {
         if (i < 0 || i >= rows || j < 0 || j >= columns) {

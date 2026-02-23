@@ -9,9 +9,6 @@ public class np {
     }
 
 
-
-
-
     public static ndarray softmax(ndarray a) {
     ndarray expA = exp(a);
     double sum = expA.sum();
@@ -43,6 +40,41 @@ public class np {
         }
         return new ndarray(result);
     }
+    public static ndarray maximum(ndarray a, ndarray b){
+        int[] shapeA = a.shape();
+        int[] shapeB = b.shape();
+        if (shapeA[0] != shapeB[0] || shapeA[1] != shapeB[1]) {
+            throw new InvalidShapeException("Maximum: shapes " + shapeA[0] + "x" + shapeA[1] + " and " + shapeB[0] + "x" + shapeB[1] + " must match");
+        }
+        int t_row = shapeA[0];
+        int t_col = shapeA[1];
+        
+        double[][] arr = new double[t_row][t_col];
+        for(int i = 0; i < t_row; i++){
+            for(int j = 0; j < t_col; j++){
+                arr[i][j] = Math.max(a.get(i, j), b.get(i, j));
+            }
+        }
+        return new ndarray(arr);
+    }
+    
+    public static ndarray maximum(double a, ndarray b){
+        int t_row = b.shape()[0];
+        int t_col = b.shape()[1];
+        
+        double[][] arr = new double[t_row][t_col];
+        for(int i = 0; i < t_row; i++){
+            for(int j = 0; j < t_col; j++){
+                arr[i][j] = Math.max(a, b.get(i, j));
+            }
+        }
+        return new ndarray(arr);
+    }
+    
+    public static ndarray maximum(ndarray a, double b){
+        return maximum(b, a);
+    }
+
     
 
 
@@ -295,29 +327,54 @@ public class np {
 
     //------------------Matrix Multiplication---------------------
     public static ndarray matmul(ndarray a, ndarray b) {
+
         int[] shapeA = a.shape();
         int[] shapeB = b.shape();
-        if (shapeA[1] != shapeB[0]) {
-            throw new DimensionMismatchException("Matmul: cannot multiply " + shapeA[0] + "x" + shapeA[1] + " by " + shapeB[0] + "x" + shapeB[1]);
+
+        int rowsA = shapeA[0];
+        int colsA = shapeA[1];
+        int rowsB = shapeB[0];
+        int colsB = shapeB[1];
+
+        if (colsA != rowsB) {
+            throw new DimensionMismatchException(
+                "Matmul(): cannot multiply " +
+                rowsA + "x" + colsA +
+                " by " +
+                rowsB + "x" + colsB
+            );
         }
-        
-        int t_row=shapeA[0];
-        int t_col=shapeB[1];
 
-        double[][] result_matrix= new double[t_row][t_col];
+        double[] dataA = a.flattenedData();
+        double[] dataB = b.flattenedData();
+        double[] result = new double[rowsA * colsB];
 
-        int n=shapeA[1];
+        // Parallel over rows of A
+        java.util.stream.IntStream.range(0, rowsA)
+            .parallel()
+            .forEach(i -> {
+                for (int k = 0; k < colsA; k++) {           
+                    double valA = dataA[i * colsA + k];     
+                    int rowOffsetB = k * colsB; 
+                    int rowOffsetResult = i * colsB;                
 
-        for(int k=0;k<n;k++){
-            for(int i=0;i<t_row;i++){
-                for(int j=0;j<t_col;j++){
-                    result_matrix[i][j]+=a.get(i,k)*b.get(k,j);
-                }
+                    for (int j = 0; j < colsB; j++) { 
+                        result[rowOffsetResult + j] += 
+                            valA * dataB[rowOffsetB + j]; 
+                    } 
+                }  
+            });  
+
+       
+        double[][] result2D = new double[rowsA][colsB];
+
+        for (int i = 0; i < rowsA; i++) { 
+            for (int j = 0; j < colsB; j++) { 
+                result2D[i][j] = result[i * colsB + j]; 
             }
         }
 
-        ndarray res = new ndarray(result_matrix);
-        return res;
+        return new ndarray(result2D);
     }
 
     public static ndarray dot(ndarray a, ndarray b) {
