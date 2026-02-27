@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreJa | Neural Vision Lab</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #080e1a;
+            --surface: #0f1d2e;
+            --card: #152035;
+            --border: rgba(56, 189, 248, 0.12);
+            --accent: #38bdf8;
+            --accent2: #818cf8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text: #e2eaf5;
+            --muted: #6b8aad;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+        .logo { font-size: 1.4rem; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; }
+        .logo span { color: var(--muted); font-weight: 400; font-size: 0.85rem; margin-left: 8px; }
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            background: rgba(239,68,68,0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239,68,68,0.3);
+            transition: all 0.4s;
+        }
+        .status-pill.ready {
+            background: rgba(16,185,129,0.12);
+            color: var(--success);
+            border-color: rgba(16,185,129,0.3);
+        }
+        .pulse {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 1.4s infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 280px 1fr 260px;
+            gap: 20px;
+            padding: 24px 32px;
+            width: 100%;
+            max-width: 1160px;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .panel-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .canvas-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        #mainCanvas {
+            background: #000;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            cursor: crosshair;
+            touch-action: none;
+            transition: border-color 0.3s;
+            display: block;
+            width: 100%;
+            max-width: 420px;
+            aspect-ratio: 1;
+        }
+        #mainCanvas:active { border-color: var(--accent); }
+
+        .btn-row { display: flex; gap: 10px; width: 100%; max-width: 420px; }
+        .btn {
+            flex: 1;
+            padding: 11px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            transition: all 0.18s;
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn:hover { background: #1e3350; transform: translateY(-1px); }
+        .btn.primary { background: var(--accent); color: #040d1a; border-color: transparent; }
+        .btn.primary:hover { background: #7dd3fc; }
+        .btn.danger { background: rgba(239,68,68,0.15); color: var(--danger); border-color: rgba(239,68,68,0.3); }
+        .btn.danger:hover { background: rgba(239,68,68,0.25); }
+
+        /* ── Brush slider ─────────────────────────────────────── */
+        .slider-row { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 420px; }
+        .slider-row label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+        input[type=range] {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 4px;
+            background: #1e3350;
+            border-radius: 4px;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+        .slider-val { font-size: 0.78rem; color: var(--accent); width: 24px; text-align: right; }
+
+        .pred-list { display: flex; flex-direction: column; gap: 7px; }
+        .pred-row {
+            display: grid;
+            grid-template-columns: 18px 1fr 44px;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 8px;
+            border-radius: 8px;
+            transition: background 0.25s;
+        }
+        .pred-row.winner { background: rgba(16,185,129,0.08); }
+        .pred-digit {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--muted);
+            transition: color 0.25s;
+        }
+        .pred-row.winner .pred-digit { color: var(--success); }
+        .bar-track {
+            height: 8px;
+            background: #0a1525;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent2);
+            border-radius: 4px;
+            transition: width 0.28s ease, background 0.28s;
+        }
+        .pred-row.winner .bar-fill { background: var(--success); box-shadow: 0 0 8px rgba(16,185,129,0.5); }
+        .pred-pct {
+            font-size: 0.75rem;
+            text-align: right;
+            color: var(--muted);
+            transition: color 0.25s;
+        }
+        .pred-row.winner .pred-pct { color: var(--success); font-weight: 700; }
+
+
+        .big-pred {
+            text-align: center;
+            padding: 12px;
+            background: var(--surface);
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+        .big-pred-digit { font-size: 3rem; font-weight: 900; color: var(--success); line-height: 1; }
+        .big-pred-conf { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+        .big-pred-digit.dim { color: var(--muted); }
+
+        .vision-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        #debugCanvas {
+            width: 112px;
+            height: 112px;
+            image-rendering: pixelated;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #000;
+            display: block;
+            margin: 0 auto;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--muted);
+            padding: 8px 10px;
+            background: var(--surface);
+            border-radius: 8px;
+        }
+        .info-row span:last-child { color: var(--accent); font-weight: 600; }
+
+        .tip-box {
+            background: rgba(56,189,248,0.06);
+            border: 1px solid rgba(56,189,248,0.15);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.75rem;
+            line-height: 1.6;
+            color: var(--muted);
+        }
+        .tip-box strong { color: var(--accent); }
+
+        @media (max-width: 900px) {
+            .workspace { grid-template-columns: 1fr; max-width: 480px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">CoreJa <span>Neural Vision Lab v2.1</span></div>
+    <div class="status-pill" id="statusPill">
+        <div class="pulse"></div>
+        <span id="statusText">Connecting…</span>
+    </div>
+</header>
+
+<div class="workspace">
+
+    <div class="panel">
+        <div class="panel-title">Live Predictions</div>
+
+        <div class="big-pred">
+            <div class="big-pred-digit dim" id="bigDigit">?</div>
+            <div class="big-pred-conf" id="bigConf">Draw a digit to begin</div>
+        </div>
+
+        <div class="pred-list" id="predList"></div>
+    </div>
+
+    <div class="panel canvas-panel">
+        <div class="panel-title" style="width:100%; max-width:420px;">Drawing Pad</div>
+
+        <canvas id="mainCanvas" width="420" height="420"></canvas>
+
+        <div class="slider-row">
+            <label>Brush</label>
+            <input type="range" id="brushSize" min="8" max="48" value="22"
+                   oninput="document.getElementById('bVal').textContent=this.value">
+            <div class="slider-val" id="bVal">22</div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn danger" onclick="clearCanvas()">CLEAR</button>
+            <button class="btn primary" onclick="predictNow()">PREDICT NOW</button>
+        </div>
+    </div>
+
+
+    <div class="panel">
+        <div class="panel-title">AI Vision (28×28)</div>
+
+        <div class="vision-wrap">
+            <canvas id="debugCanvas" width="28" height="28"></canvas>
+
+            <div class="info-row"><span>Input</span><span>28×28 grayscale</span></div>
+            <div class="info-row"><span>Norm</span><span>÷ 255 → [0,1]</span></div>
+            <div class="info-row"><span>Center</span><span>Bounding box</span></div>
+            <div class="info-row"><span>Auto-infer</span><span>50ms live</span></div>
+
+            <div class="tip-box">
+                <strong>Tips for best accuracy:</strong><br>
+                • Draw big — fill most of the pad<br>
+                • Keep digits upright<br>
+                • Use a thick, clear stroke<br>
+                • Center your digit
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+//  MATH ENGINE 
+// ─────────────────────────────────────────────────────────────
+const M = {
+    dot(A, B) {
+        const rA = A.length, cA = A[0].length, cB = B[0].length;
+        const R = Array.from({length: rA}, () => new Float32Array(cB));
+        for (let i = 0; i < rA; i++)
+            for (let k = 0; k < cA; k++) {
+                const t = A[i][k];
+                for (let j = 0; j < cB; j++) R[i][j] += t * B[k][j];
+            }
+        return R;
+    },
+    addBias(A, b) { return A.map(row => row.map((v, i) => v + b[0][i])); },
+    relu(A)       { return A.map(row => row.map(v => Math.max(0, v))); },
+    softmax(A) {
+        const row = A[0];
+        const mx  = Math.max(...row);
+        const ex  = row.map(v => Math.exp(v - mx));
+        const s   = ex.reduce((a, b) => a + b, 0);
+        return ex.map(v => v / s);
+    }
+};
+
+const mainCanvas  = document.getElementById('mainCanvas');
+const ctx         = mainCanvas.getContext('2d', {willReadFrequently: true});
+const debugCanvas = document.getElementById('debugCanvas');
+const dCtx        = debugCanvas.getContext('2d');
+
+const predList = document.getElementById('predList');
+for (let i = 0; i < 10; i++) {
+    predList.innerHTML += `
+        <div class="pred-row" id="row${i}">
+            <div class="pred-digit">${i}</div>
+            <div class="bar-track"><div class="bar-fill" id="bar${i}"></div></div>
+            <div class="pred-pct" id="pct${i}">0%</div>
+        </div>`;
+}
+
+let drawing = false, last = null;
+
+function pos(e) {
+    const r = mainCanvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    const scaleX = mainCanvas.width  / r.width;
+    const scaleY = mainCanvas.height / r.height;
+    return {
+        x: (src.clientX - r.left) * scaleX,
+        y: (src.clientY - r.top)  * scaleY
+    };
+}
+
+mainCanvas.addEventListener('mousedown',  e => { drawing = true;  last = pos(e); });
+mainCanvas.addEventListener('mousemove',  e => {
+    if (!drawing) return;
+    const cur = pos(e);
+    const brush = +document.getElementById('brushSize').value;
+    ctx.strokeStyle = '#fff';
+    ctx.lineJoin = ctx.lineCap = 'round';
+    ctx.lineWidth = brush;
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(cur.x,  cur.y);
+    ctx.stroke();
+    last = cur;
+});
+window.addEventListener('mouseup', () => drawing = false);
+mainCanvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; last = pos(e); });
+mainCanvas.addEventListener('touchmove',  e => {
+    e.preventDefault();
+    const cur = pos(e);
+    const brush = +document.getElementById('brushSize').value;
+    ctx.strokeStyle = '#fff';
+    ctx.lineJoin = ctx.lineCap = 'round';
+    ctx.lineWidth = brush;
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(cur.x,  cur.y);
+    ctx.stroke();
+    last = cur;
+});
+
+function clearCanvas() {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+    dCtx.fillStyle = '#000';
+    dCtx.fillRect(0, 0, 28, 28);
+    resetBars();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  PRE-PROCESSING  ← this is the critical part
+//
+//  MNIST convention:
+//  1. Digit is in a 20×20 bounding box
+//  2. That box is centered by center-of-mass inside 28×28
+//  3. Anti-aliased, no hard crop
+//
+//  We replicate this exactly so the browser input matches
+//  what the model was trained on.
+// ─────────────────────────────────────────────────────────────
+function preprocess() {
+    const W = mainCanvas.width, H = mainCanvas.height;
+    const raw = ctx.getImageData(0, 0, W, H).data;
+
+    // 1. Find bounding box of drawn pixels
+    let minX = W, maxX = 0, minY = H, maxY = 0, found = false;
+    for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+            if (raw[(y * W + x) * 4] > 30) {  // red channel > threshold
+                if (x < minX) minX = x; if (x > maxX) maxX = x;
+                if (y < minY) minY = y; if (y > maxY) maxY = y;
+                found = true;
+            }
+        }
+    }
+    if (!found) return null;
+
+    // 2. Scale the bounding box contents into 20×20
+    const bW   = maxX - minX + 1;
+    const bH   = maxY - minY + 1;
+    const scale = 20 / Math.max(bW, bH);   // fit longer side into 20px
+    const sw   = Math.round(bW * scale);
+    const sh   = Math.round(bH * scale);
+
+    // 3. Center the 20×20 region inside 28×28 using center-of-mass offset
+    //    (simple version: geometric center)
+    const offX = Math.floor((28 - sw) / 2);
+    const offY = Math.floor((28 - sh) / 2);
+
+    // 4. Draw into 28×28 debug canvas
+    dCtx.fillStyle = '#000';
+    dCtx.fillRect(0, 0, 28, 28);
+    dCtx.drawImage(mainCanvas, minX, minY, bW, bH, offX, offY, sw, sh);
+
+    // 5. Extract normalized pixel values [0, 1]
+    const pxData = dCtx.getImageData(0, 0, 28, 28).data;
+    const input  = new Array(784);
+    for (let i = 0; i < 784; i++) {
+        input[i] = pxData[i * 4] / 255.0;  // use red channel (greyscale)
+    }
+    return [input];
+}
+
+
+let weights = null;
+
+async function predictNow() {
+    if (!weights) return;
+    const input = preprocess();
+    if (!input) { resetBars(); return; }
+
+    const z1    = M.addBias(M.dot(input, weights.W1), weights.b1);
+    const a1    = M.relu(z1);
+    const z2    = M.addBias(M.dot(a1, weights.W2), weights.b2);
+    const probs = M.softmax(z2);
+
+    updateUI(probs);
+}
+
+function updateUI(probs) {
+    const maxP  = Math.max(...probs);
+    const guess = probs.indexOf(maxP);
+
+    // Big prediction
+    const bigDigit = document.getElementById('bigDigit');
+    const bigConf  = document.getElementById('bigConf');
+    if (maxP > 0.15) {
+        bigDigit.textContent = guess;
+        bigDigit.className   = 'big-pred-digit';
+        bigConf.textContent  = `${(maxP * 100).toFixed(1)}% confident`;
+    } else {
+        bigDigit.textContent = '?';
+        bigDigit.className   = 'big-pred-digit dim';
+        bigConf.textContent  = 'Not sure yet…';
+    }
+
+    // Bars
+    probs.forEach((p, i) => {
+        const pct = (p * 100).toFixed(1);
+        document.getElementById(`bar${i}`).style.width   = pct + '%';
+        document.getElementById(`pct${i}`).textContent   = pct + '%';
+        const row = document.getElementById(`row${i}`);
+        row.classList.toggle('winner', p === maxP && p > 0.15);
+    });
+}
+
+function resetBars() {
+    document.getElementById('bigDigit').textContent = '?';
+    document.getElementById('bigDigit').className   = 'big-pred-digit dim';
+    document.getElementById('bigConf').textContent  = 'Draw a digit to begin';
+    for (let i = 0; i < 10; i++) {
+        document.getElementById(`bar${i}`).style.width = '0%';
+        document.getElementById(`pct${i}`).textContent = '0%';
+        document.getElementById(`row${i}`).classList.remove('winner');
+    }
+}
+
+const pill = document.getElementById('statusPill');
+const txt  = document.getElementById('statusText');
+
+async function init() {
+    clearCanvas();
+    try {
+        const res = await fetch('weights.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        weights = await res.json();
+
+        // Validate the shape so we catch wrong architecture silently
+        const h = weights.W1[0].length;
+        pill.classList.add('ready');
+        txt.textContent = `Ready · 784→${h}→10`;
+    } catch (e) {
+        txt.textContent  = 'weights.json not found';
+        pill.style.background = 'rgba(239,68,68,0.2)';
+        console.error('Weight load failed:', e);
+    }
+
+    setInterval(predictNow, 50);  // 50ms — runs always, during and after drawing
+}
+
+init();
+</script>
+</body>
+</html>

@@ -464,6 +464,29 @@ public class np {
             return new ndarray(data);
         }
     }
+    public static ndarray loadCSV(String path, boolean hasHeader) throws IOException {
+        java.util.List<double[]> rowsList = new java.util.ArrayList<>();
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            if (hasHeader) br.readLine(); 
+            
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                double[] row = new double[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    row[i] = Double.parseDouble(values[i]);
+                }
+                rowsList.add(row);
+            }
+        }
+
+        double[][] data = new double[rowsList.size()][];
+        for (int i = 0; i < rowsList.size(); i++) {
+            data[i] = rowsList.get(i);
+        }
+        return new ndarray(data);
+}
 
 
 

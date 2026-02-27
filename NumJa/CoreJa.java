@@ -1,5 +1,5 @@
 package NumJa;
-
+import java.io.IOException;
 import NumJa.np;
 import NumJa.ndarray;
 
@@ -42,10 +42,14 @@ public class CoreJa {
     }
 
     public ndarray forward(ndarray input) {
+        this.input_stored = input;
+
+        
         ndarray z1 = np.dot(input, this.W1).add(this.b1);
-        ndarray a1 = relu(z1);
-        ndarray z2 = np.dot(a1, this.W2).add(this.b2);
-           
+        
+        this.a1 = relu(z1); 
+
+        ndarray z2 = np.dot(this.a1, this.W2).add(this.b2);
         return z2; 
     }
 
@@ -58,7 +62,7 @@ public class CoreJa {
     private ndarray a1, input_stored; 
     private ndarray dW1, db1, dW2, db2;
 
-public void backward(ndarray output_error) {
+    public void backward(ndarray output_error) {
         // output_error is (prediction - target)
         
         // dW2 = a1.T * error
@@ -83,7 +87,42 @@ public void backward(ndarray output_error) {
     public int predict(ndarray output) {
         return np.argmax(output);
     }
+    public void save(String baseFilename) throws IOException {
+        np.save(this.W1, baseFilename + "_W1.njz");
+        np.save(this.b1, baseFilename + "_b1.njz");
+        np.save(this.W2, baseFilename + "_W2.njz");
+        np.save(this.b2, baseFilename + "_b2.njz");
+        System.out.println("Model weights saved");
+    }
+    public void load(String baseFilename) throws IOException {
+        this.W1 = np.load(baseFilename + "_W1.njz");
+        this.b1 = np.load(baseFilename + "_b1.njz");
+        this.W2 = np.load(baseFilename + "_W2.njz");
+        this.b2 = np.load(baseFilename + "_b2.njz");
+        System.out.println("Model weights loaded");
+    }
 
+    public void exportToJSON(String filename) throws IOException {
+        StringBuilder json = new StringBuilder("{");
+        json.append("\"W1\":").append(matrixToJSON(W1)).append(",");
+        json.append("\"b1\":").append(matrixToJSON(b1)).append(",");
+        json.append("\"W2\":").append(matrixToJSON(W2)).append(",");
+        json.append("\"b2\":").append(matrixToJSON(b2)).append("}");
+        
+        java.nio.file.Files.write(java.nio.file.Paths.get(filename), json.toString().getBytes());
+        System.out.println("Model exported to JSON: " + filename);
+    }
 
+    private String matrixToJSON(ndarray arr) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < arr.shape()[0]; i++) {
+            sb.append("[");
+            for (int j = 0; j < arr.shape()[1]; j++) {
+                sb.append(arr.get(i, j)).append(j == arr.shape()[1] - 1 ? "" : ",");
+            }
+            sb.append("]").append(i == arr.shape()[0] - 1 ? "" : ",");
+        }
+        return sb.append("]").toString();
+    }
 
 }

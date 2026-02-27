@@ -4,12 +4,12 @@
 
 test/
 test
-Test.java
+
 
 
 #Saved NumJa file extention 
 *.njz
-
+Model/
 
 data/
 test.py
